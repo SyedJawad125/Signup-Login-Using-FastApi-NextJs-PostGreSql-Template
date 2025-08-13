@@ -177,7 +177,7 @@ from app.routers import (
     role, permission, rank, attendance, 
     timesheet, leave, notification, employee_salary,
     salary_structure, payslip, salary_history, 
-    image_category, image, ml_app  # Added ml_app router
+    image_category, image, house_price_model  # Added house_price_model router
 )
 
 app = FastAPI(
@@ -256,7 +256,7 @@ app.include_router(payslip.router)
 app.include_router(salary_history.router)
 app.include_router(image_category.router)
 app.include_router(image.router)
-app.include_router(ml_app.router)  # Added ML router
+app.include_router(house_price_model.router)  # Added ML router
 
 @app.on_event("startup")
 def startup_event():
