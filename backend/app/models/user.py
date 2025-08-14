@@ -16,15 +16,11 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
     role_id = Column(Integer, ForeignKey("roles.id"))
-
     role = relationship("Role", back_populates="users", foreign_keys=[role_id])
-
     created_roles = relationship("Role", back_populates="creator", foreign_keys="Role.created_by_user_id")
-
-    created_departments = relationship("Department", back_populates="creator")
     created_permissions = relationship("Permission", back_populates="creator")
-    
-
     permissions = relationship("Permission", secondary=user_permission, back_populates="users")
-
+    # Employee
+    employee_id = Column(Integer, ForeignKey("employees.id"), unique=True)  # one user per employee
+    employee    = relationship("Employee", back_populates="user")
     

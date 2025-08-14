@@ -156,28 +156,16 @@ from app.database import engine, Base
 
 # Import all models explicitly
 from app.models.user import User
-from app.models.department import Department
 from app.models.role import Role
 from app.models.permission import Permission
-from app.models.rank import Rank
-from app.models.attendance import Attendance
-from app.models.timesheet import Timesheet
-from app.models.leave import Leave
-from app.models.notification import Notification
-from app.models.employee_salary import EmployeeSalary
-from app.models.salary_structure import SalaryStructure
-from app.models.payslip import Payslip
-from app.models.salary_history import SalaryHistory
 from app.models.image_category import ImageCategory
 from app.models.image import Image
 
 # Import routers
 from app.routers import (
     employee, department, auth, user, 
-    role, permission, rank, attendance, 
-    timesheet, leave, notification, employee_salary,
-    salary_structure, payslip, salary_history, 
-    image_category, image, house_price_model, churn_router   # Added house_price_model router
+    role, permission,image_category, image, 
+    house_price_model, churn_router   # Added house_price_model router
 )
 
 app = FastAPI(
@@ -185,10 +173,7 @@ app = FastAPI(
     version="1.0.0",
     description="An API for managing HRM features with machine learning capabilities",
     openapi_tags=[
-        {
-            "name": "Departments",
-            "description": "Operations related to leave creation, approval, and management"
-        },
+        
         {
             "name": "Employees",
             "description": "Employee profile management"
@@ -198,16 +183,8 @@ app = FastAPI(
             "description": "User login and registration"
         },
         {
-            "name": "Ranks",
-            "description": "Rank profile management"
-        },
-        {
             "name": "Roles",
             "description": "Roles profile management"
-        },
-        {
-            "name": "Notifications",
-            "description": "User notifications management"
         },
         {
             "name": "Image Categories",
@@ -242,18 +219,8 @@ def read_root():
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(employee.router)
-app.include_router(department.router)
 app.include_router(role.router)
 app.include_router(permission.router)
-app.include_router(rank.router)
-app.include_router(attendance.router)
-app.include_router(timesheet.router)
-app.include_router(leave.router)
-app.include_router(notification.router)
-app.include_router(employee_salary.router)
-app.include_router(salary_structure.router)
-app.include_router(payslip.router)
-app.include_router(salary_history.router)
 app.include_router(image_category.router)
 app.include_router(image.router)
 app.include_router(house_price_model.router)  # Added ML router
