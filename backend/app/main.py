@@ -163,9 +163,9 @@ from app.models.image import Image
 
 # Import routers
 from app.routers import (
-    employee, department, auth, user, 
+    employee, auth, user, 
     role, permission,image_category, image, 
-    house_price_model, churn_router   # Added house_price_model router
+    house_price_model   # Added house_price_model router
 )
 
 app = FastAPI(
@@ -224,7 +224,6 @@ app.include_router(permission.router)
 app.include_router(image_category.router)
 app.include_router(image.router)
 app.include_router(house_price_model.router)  # Added ML router
-app.include_router(churn_router.router)  # Added ML router
 
 @app.on_event("startup")
 def startup_event():
@@ -242,13 +241,6 @@ def startup_event():
         print("ML model ready")
     except Exception as e:
         print(f"Error loading ML model: {str(e)}")
-
-    try:
-        from app.models.churn_model import train_churn_model
-        print("Initializing churn prediction model...")
-        train_churn_model()
-    except Exception as e:
-        print(f"Error loading churn model: {str(e)}")
 
 
 @app.get("/")

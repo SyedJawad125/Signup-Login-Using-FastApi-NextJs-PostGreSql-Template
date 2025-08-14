@@ -10,8 +10,7 @@ class EmployeeBase(BaseModel):
     hire_date: date
     job_title: str
     salary: float
-    department_id: int
-    rank_id: Optional[int] = None  # ✅ Allow rank_id to be nullable
+    
 
 class EmployeeCreate(EmployeeBase):
    class Config:
@@ -41,8 +40,5 @@ class EmployeeUpdate(BaseModel):
     hire_date: Optional[date] = None
     job_title: Optional[str] = None
     salary: Optional[float] = None
-    department_id: Optional[int] = None
-    rank_id: Optional[int] = None
-
     class Config:
         extra = "forbid"
