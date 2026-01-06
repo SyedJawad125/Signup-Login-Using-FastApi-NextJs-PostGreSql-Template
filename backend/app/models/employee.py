@@ -28,14 +28,14 @@
 
 
 # app/models/employee.py
-from sqlalchemy import Column, Integer, String, Date, Float
+from sqlalchemy import Column, ForeignKey, Integer, String, Date, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from app.database import Base
-from app.models.mixins import TimeUserStampMixin  # ✅ Added
+from app.models.mixins import TimeUserStampMixin
 
 
-class Employee(TimeUserStampMixin, Base):  # ✅ Added TimeUserStampMixin
+class Employee(TimeUserStampMixin, Base):
     __tablename__ = "employees"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -47,13 +47,17 @@ class Employee(TimeUserStampMixin, Base):  # ✅ Added TimeUserStampMixin
     job_title = Column(String(100), nullable=False)
     salary = Column(Float, nullable=False)
     
-    # ✅ created_at, updated_at, deleted, deleted_at come from mixin
-    # ✅ created_by_user_id, updated_by_user_id, deleted_by_user_id come from mixin
-    # ✅ creator, updater, deleter relationships come from mixin
+    # Foreign key to User
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True)
     
     @hybrid_property
     def name(self) -> str:
         return f"{self.first_name} {self.last_name}"
     
     # User relationship (one-to-one)
-    user = relationship("User", back_populates="employee", uselist=False)
+    user = relationship(
+        "User", 
+        back_populates="employee",
+        uselist=False,
+        foreign_keys=[user_id]
+    )
