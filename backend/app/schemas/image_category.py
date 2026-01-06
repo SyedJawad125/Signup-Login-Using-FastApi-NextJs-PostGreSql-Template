@@ -57,8 +57,7 @@
 
 # app/schemas/image_category.py
 from pydantic import BaseModel, Field
-from typing import Optional, TYPE_CHECKING, List
-from datetime import datetime
+from typing import Optional, List
 from app.schemas.base import TimeUserStampSchema
 
 
@@ -67,7 +66,6 @@ class ImageCategoryBase(BaseModel):
 
 
 class ImageCategoryCreate(ImageCategoryBase):
-    """No need to pass user IDs - they come from auth"""
     class Config:
         extra = "forbid"
 
@@ -87,14 +85,29 @@ class ImageCategoryOut(ImageCategoryBase, TimeUserStampSchema):
         from_attributes = True
 
 
-# Forward reference setup
-if TYPE_CHECKING:
-    from app.schemas.image import ImageOut
+# ✅ Basic image info for nested responses
+class ImageBasicForCategory(BaseModel):
+    """Basic image info for nested category responses"""
+    id: int
+    name: Optional[str] = None
+    image_path: str
+    
+    class Config:
+        from_attributes = True
 
 
 class ImageCategoryWithImages(ImageCategoryOut):
-    """Category with nested images (avoid circular import)"""
-    images: List['ImageOut'] = []
+    """Category with nested images"""
+    images: List[ImageBasicForCategory] = []
+    
+    class Config:
+        from_attributes = True
+
+
+# ✅ Category with stats
+class ImageCategoryWithStats(ImageCategoryOut):
+    """Category with image count"""
+    image_count: int = 0
     
     class Config:
         from_attributes = True
@@ -105,6 +118,16 @@ class PaginatedImageCategories(BaseModel):
     data: List[ImageCategoryOut]
 
 
+class PaginatedImageCategoriesWithImages(BaseModel):
+    count: int
+    data: List[ImageCategoryWithImages]
+
+
 class ImageCategoryListResponse(BaseModel):
     status: str
     result: PaginatedImageCategories
+
+
+class ImageCategoryListWithImagesResponse(BaseModel):
+    status: str
+    result: PaginatedImageCategoriesWithImages

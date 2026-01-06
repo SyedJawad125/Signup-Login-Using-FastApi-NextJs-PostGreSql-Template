@@ -68,53 +68,67 @@ Centralized schemas export
 """
 from app.schemas.user import (
     UserCreate, UserUpdate, UserOut, UserWithRole,
+    UserWithEmployee, UserWithPermissions, UserDetailed,
     PaginatedUsers, UserListResponse,
     LoginRequest, TokenResponse, TokenData
 )
 from app.schemas.employee import (
-    EmployeeCreate, EmployeeUpdate, EmployeeOut,
-    PaginatedEmployees, EmployeeListResponse
+    EmployeeCreate, EmployeeUpdate, EmployeeOut, EmployeeWithUser,
+    PaginatedEmployees, EmployeeListResponse,
+    PaginatedEmployeesWithUser, EmployeeListWithUserResponse
 )
 from app.schemas.permission import (
-    PermissionCreate, PermissionUpdate, PermissionOut,
-    PaginatedPermissions, PermissionListResponse
+    PermissionCreate, PermissionUpdate, PermissionOut, PermissionWithRoles,
+    PaginatedPermissions, PermissionListResponse,
+    PaginatedPermissionsWithRoles, PermissionListWithRolesResponse
 )
 from app.schemas.role import (
-    RoleCreate, RoleUpdate, RoleOut, RoleWithPermissions,
-    PaginatedRoles, RoleListResponse
+    RoleCreate, RoleUpdate, RoleOut, RoleWithPermissions, RoleWithStats,
+    PaginatedRoles, RoleListResponse,
+    PaginatedRolesWithPermissions, RoleListWithPermissionsResponse
 )
 from app.schemas.image_category import (
     ImageCategoryCreate, ImageCategoryUpdate, ImageCategoryOut,
-    ImageCategoryWithImages, PaginatedImageCategories, ImageCategoryListResponse
+    ImageCategoryWithImages, ImageCategoryWithStats,
+    PaginatedImageCategories, ImageCategoryListResponse,
+    PaginatedImageCategoriesWithImages, ImageCategoryListWithImagesResponse
 )
 from app.schemas.image import (
     ImageCreate, ImageUpdate, ImageOut, ImageWithCategory,
-    PaginatedImages, ImageListResponse, ImageUploadResponse
+    PaginatedImages, ImageListResponse, ImageUploadResponse,
+    PaginatedImagesWithCategory, ImageListWithCategoryResponse
 )
 
 __all__ = [
     # User
     "UserCreate", "UserUpdate", "UserOut", "UserWithRole",
+    "UserWithEmployee", "UserWithPermissions", "UserDetailed",
     "PaginatedUsers", "UserListResponse",
     "LoginRequest", "TokenResponse", "TokenData",
     
     # Employee
-    "EmployeeCreate", "EmployeeUpdate", "EmployeeOut",
+    "EmployeeCreate", "EmployeeUpdate", "EmployeeOut", "EmployeeWithUser",
     "PaginatedEmployees", "EmployeeListResponse",
+    "PaginatedEmployeesWithUser", "EmployeeListWithUserResponse",
     
     # Permission
-    "PermissionCreate", "PermissionUpdate", "PermissionOut",
+    "PermissionCreate", "PermissionUpdate", "PermissionOut", "PermissionWithRoles",
     "PaginatedPermissions", "PermissionListResponse",
+    "PaginatedPermissionsWithRoles", "PermissionListWithRolesResponse",
     
     # Role
-    "RoleCreate", "RoleUpdate", "RoleOut", "RoleWithPermissions",
+    "RoleCreate", "RoleUpdate", "RoleOut", "RoleWithPermissions", "RoleWithStats",
     "PaginatedRoles", "RoleListResponse",
+    "PaginatedRolesWithPermissions", "RoleListWithPermissionsResponse",
     
     # Image Category
     "ImageCategoryCreate", "ImageCategoryUpdate", "ImageCategoryOut",
-    "ImageCategoryWithImages", "PaginatedImageCategories", "ImageCategoryListResponse",
+    "ImageCategoryWithImages", "ImageCategoryWithStats",
+    "PaginatedImageCategories", "ImageCategoryListResponse",
+    "PaginatedImageCategoriesWithImages", "ImageCategoryListWithImagesResponse",
     
     # Image
     "ImageCreate", "ImageUpdate", "ImageOut", "ImageWithCategory",
     "PaginatedImages", "ImageListResponse", "ImageUploadResponse",
+    "PaginatedImagesWithCategory", "ImageListWithCategoryResponse",
 ]

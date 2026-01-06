@@ -49,7 +49,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import date
 from typing import Optional
-from app.schemas.base import TimeUserStampSchema  # ✅ Import
+from app.schemas.base import TimeUserStampSchema
 
 
 class EmployeeBase(BaseModel):
@@ -63,6 +63,8 @@ class EmployeeBase(BaseModel):
 
 
 class EmployeeCreate(EmployeeBase):
+    user_id: Optional[int] = None  # ✅ Added to link employee to user
+    
     class Config:
         extra = "forbid"
 
@@ -75,14 +77,36 @@ class EmployeeUpdate(BaseModel):
     hire_date: Optional[date] = None
     job_title: Optional[str] = Field(None, min_length=1, max_length=100)
     salary: Optional[float] = Field(None, gt=0)
+    user_id: Optional[int] = None  # ✅ Added
     
     class Config:
         extra = "forbid"
 
 
-class EmployeeOut(EmployeeBase, TimeUserStampSchema):  # ✅ Now includes all mixin fields
+class EmployeeOut(EmployeeBase, TimeUserStampSchema):
     id: int
     name: str
+    user_id: Optional[int] = None  # ✅ Added to expose the relationship
+    
+    class Config:
+        from_attributes = True
+
+
+# ✅ NEW: Employee with user details
+class UserBasicForEmployee(BaseModel):
+    """Basic user info for nested employee responses"""
+    id: int
+    username: Optional[str] = None
+    email: EmailStr
+    is_active: bool
+    
+    class Config:
+        from_attributes = True
+
+
+class EmployeeWithUser(EmployeeOut):
+    """Employee with user details"""
+    user: Optional[UserBasicForEmployee] = None
     
     class Config:
         from_attributes = True
@@ -96,3 +120,14 @@ class PaginatedEmployees(BaseModel):
 class EmployeeListResponse(BaseModel):
     status: str
     result: PaginatedEmployees
+
+
+# ✅ NEW: For detailed employee list with user info
+class PaginatedEmployeesWithUser(BaseModel):
+    count: int
+    data: list[EmployeeWithUser]
+
+
+class EmployeeListWithUserResponse(BaseModel):
+    status: str
+    result: PaginatedEmployeesWithUser

@@ -56,9 +56,9 @@
 
 # app/schemas/user.py
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from app.schemas.base import TimeStampSchema  # ✅ Import TimeStampSchema
+from app.schemas.base import TimeStampSchema
 
 
 class UserBase(BaseModel):
@@ -89,12 +89,11 @@ class UserUpdate(BaseModel):
         extra = "forbid"
 
 
-class UserOut(UserBase, TimeStampSchema):  # ✅ Now includes created_at, updated_at, deleted, deleted_at
+class UserOut(UserBase, TimeStampSchema):
     id: int
     is_active: bool
     is_superuser: bool
     role_id: Optional[int] = None
-    employee_id: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -127,9 +126,72 @@ class TokenData(BaseModel):
     token_type: Optional[str] = None
 
 
-# Add this to your existing user.py file
+# ✅ NEW: Nested schemas for relationships
+class RoleBasic(BaseModel):
+    """Basic role info for nested responses"""
+    id: int
+    name: str
+    code: Optional[str] = None
+    description: str
+    
+    class Config:
+        from_attributes = True
+
+
+class EmployeeBasic(BaseModel):
+    """Basic employee info for nested responses"""
+    id: int
+    first_name: str
+    last_name: str
+    name: str
+    email: EmailStr
+    job_title: str
+    
+    class Config:
+        from_attributes = True
+
+
+class PermissionBasic(BaseModel):
+    """Basic permission info for nested responses"""
+    id: int
+    name: str
+    code: str
+    module_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+# ✅ NEW: User with relationships
 class UserWithRole(UserOut):
-    role: Optional[str] = None
+    """User with role details"""
+    role: Optional[RoleBasic] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class UserWithEmployee(UserOut):
+    """User with employee details"""
+    employee: Optional[EmployeeBasic] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class UserWithPermissions(UserOut):
+    """User with direct permissions"""
+    permissions: List[PermissionBasic] = []
+    
+    class Config:
+        from_attributes = True
+
+
+class UserDetailed(UserOut):
+    """User with all relationship details"""
+    role: Optional[RoleBasic] = None
+    employee: Optional[EmployeeBasic] = None
+    permissions: List[PermissionBasic] = []
     
     class Config:
         from_attributes = True

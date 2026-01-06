@@ -101,8 +101,19 @@
 # app/schemas/role.py
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from app.schemas.base import TimeUserStampSchema  # ✅ Import
-from app.schemas.permission import PermissionOut  # ✅ Import at top level
+from app.schemas.base import TimeUserStampSchema
+
+
+# ✅ Forward declare to avoid circular import
+class PermissionOut(BaseModel):
+    id: int
+    name: str
+    description: str
+    code: str
+    module_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
 
 
 class RoleBase(BaseModel):
@@ -128,7 +139,7 @@ class RoleUpdate(BaseModel):
         extra = "forbid"
 
 
-class RoleOut(RoleBase, TimeUserStampSchema):  # ✅ Now includes all mixin fields
+class RoleOut(RoleBase, TimeUserStampSchema):
     id: int
     
     class Config:
@@ -143,7 +154,22 @@ class RoleWithPermissions(RoleOut):
         from_attributes = True
 
 
+# ✅ NEW: Role with user count
+class RoleWithStats(RoleOut):
+    """Role with statistics"""
+    user_count: int = 0
+    permission_count: int = 0
+    
+    class Config:
+        from_attributes = True
+
+
 class PaginatedRoles(BaseModel):
+    count: int
+    data: List[RoleOut]
+
+
+class PaginatedRolesWithPermissions(BaseModel):
     count: int
     data: List[RoleWithPermissions]
 
@@ -151,3 +177,8 @@ class PaginatedRoles(BaseModel):
 class RoleListResponse(BaseModel):
     status: str
     result: PaginatedRoles
+
+
+class RoleListWithPermissionsResponse(BaseModel):
+    status: str
+    result: PaginatedRolesWithPermissions

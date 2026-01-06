@@ -47,8 +47,8 @@
 
 # app/schemas/permission.py
 from pydantic import BaseModel, Field
-from typing import Optional
-from app.schemas.base import TimeUserStampSchema  # ✅ Import
+from typing import Optional, List
+from app.schemas.base import TimeUserStampSchema
 
 
 class PermissionBase(BaseModel):
@@ -73,8 +73,27 @@ class PermissionUpdate(BaseModel):
         extra = "forbid"
 
 
-class PermissionOut(PermissionBase, TimeUserStampSchema):  # ✅ Now includes all mixin fields
+class PermissionOut(PermissionBase, TimeUserStampSchema):
     id: int
+    
+    class Config:
+        from_attributes = True
+
+
+# ✅ NEW: Permission with role info
+class RoleBasicForPermission(BaseModel):
+    """Basic role info for nested permission responses"""
+    id: int
+    name: str
+    code: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class PermissionWithRoles(PermissionOut):
+    """Permission with roles that have this permission"""
+    roles: List[RoleBasicForPermission] = []
     
     class Config:
         from_attributes = True
@@ -88,3 +107,13 @@ class PaginatedPermissions(BaseModel):
 class PermissionListResponse(BaseModel):
     status: str
     result: PaginatedPermissions
+
+
+class PaginatedPermissionsWithRoles(BaseModel):
+    count: int
+    data: list[PermissionWithRoles]
+
+
+class PermissionListWithRolesResponse(BaseModel):
+    status: str
+    result: PaginatedPermissionsWithRoles
