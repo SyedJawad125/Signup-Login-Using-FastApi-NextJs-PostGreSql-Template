@@ -45,10 +45,64 @@
 
 
 
+# # app/schemas/role.py
+# from pydantic import BaseModel, Field
+# from typing import Optional
+# from app.schemas.base import TimeUserStampSchema  # ✅ Import
+
+
+# class RoleBase(BaseModel):
+#     name: str = Field(..., min_length=1, max_length=50)
+#     description: str = Field(..., min_length=1)
+#     code: Optional[str] = Field(None, max_length=50)
+
+
+# class RoleCreate(RoleBase):
+#     permission_ids: Optional[list[int]] = []
+    
+#     class Config:
+#         extra = "forbid"
+
+
+# class RoleUpdate(BaseModel):
+#     name: Optional[str] = Field(None, min_length=1, max_length=50)
+#     description: Optional[str] = Field(None, min_length=1)
+#     code: Optional[str] = Field(None, max_length=50)
+#     permission_ids: Optional[list[int]] = None
+    
+#     class Config:
+#         extra = "forbid"
+
+
+# class RoleOut(RoleBase, TimeUserStampSchema):  # ✅ Now includes all mixin fields
+#     id: int
+    
+#     class Config:
+#         from_attributes = True
+
+
+# class RoleWithPermissions(RoleOut):
+#     """Role with permissions details"""
+#     from app.schemas.permission import PermissionOut
+#     permissions: list[PermissionOut] = []
+
+
+# class PaginatedRoles(BaseModel):
+#     count: int
+#     data: list[RoleWithPermissions]
+
+
+# class RoleListResponse(BaseModel):
+#     status: str
+#     result: PaginatedRoles
+
+
+
 # app/schemas/role.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from app.schemas.base import TimeUserStampSchema  # ✅ Import
+from app.schemas.permission import PermissionOut  # ✅ Import at top level
 
 
 class RoleBase(BaseModel):
@@ -58,7 +112,7 @@ class RoleBase(BaseModel):
 
 
 class RoleCreate(RoleBase):
-    permission_ids: Optional[list[int]] = []
+    permission_ids: Optional[List[int]] = []
     
     class Config:
         extra = "forbid"
@@ -68,7 +122,7 @@ class RoleUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
     description: Optional[str] = Field(None, min_length=1)
     code: Optional[str] = Field(None, max_length=50)
-    permission_ids: Optional[list[int]] = None
+    permission_ids: Optional[List[int]] = None
     
     class Config:
         extra = "forbid"
@@ -83,13 +137,15 @@ class RoleOut(RoleBase, TimeUserStampSchema):  # ✅ Now includes all mixin fiel
 
 class RoleWithPermissions(RoleOut):
     """Role with permissions details"""
-    from app.schemas.permission import PermissionOut
-    permissions: list[PermissionOut] = []
+    permissions: List[PermissionOut] = []
+    
+    class Config:
+        from_attributes = True
 
 
 class PaginatedRoles(BaseModel):
     count: int
-    data: list[RoleWithPermissions]
+    data: List[RoleWithPermissions]
 
 
 class RoleListResponse(BaseModel):

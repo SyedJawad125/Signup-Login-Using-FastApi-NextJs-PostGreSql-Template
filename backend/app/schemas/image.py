@@ -51,7 +51,7 @@
 
 # app/schemas/image.py
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from app.schemas.base import TimeUserStampSchema
 
@@ -89,10 +89,17 @@ class ImageOut(ImageBase, TimeUserStampSchema):
         from_attributes = True
 
 
+# Forward reference setup to avoid circular imports
+if TYPE_CHECKING:
+    from app.schemas.image_category import ImageCategoryOut
+
+
 class ImageWithCategory(ImageOut):
     """Image with category details"""
-    from app.schemas.image_category import ImageCategoryOut
-    category: Optional[ImageCategoryOut] = None
+    category: Optional['ImageCategoryOut'] = None
+    
+    class Config:
+        from_attributes = True
 
 
 class PaginatedImages(BaseModel):

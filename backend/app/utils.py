@@ -89,7 +89,7 @@ def filter_attendances(params, query):
     
 
 from starlette.datastructures import QueryParams
-from app.models.image_category import ImageCategory
+from app.models.image import ImageCategory
 
 
 def filter_image_categories(query_params: QueryParams, query: Query) -> Query:

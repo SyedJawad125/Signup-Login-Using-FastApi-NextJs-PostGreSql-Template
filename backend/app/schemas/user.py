@@ -125,3 +125,11 @@ class TokenResponse(BaseModel):
 class TokenData(BaseModel):
     user_id: Optional[int] = None
     token_type: Optional[str] = None
+
+
+# Add this to your existing user.py file
+class UserWithRole(UserOut):
+    role: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

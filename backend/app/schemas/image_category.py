@@ -57,7 +57,7 @@
 
 # app/schemas/image_category.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, List
 from datetime import datetime
 from app.schemas.base import TimeUserStampSchema
 
@@ -87,18 +87,22 @@ class ImageCategoryOut(ImageCategoryBase, TimeUserStampSchema):
         from_attributes = True
 
 
+# Forward reference setup
+if TYPE_CHECKING:
+    from app.schemas.image import ImageOut
+
+
 class ImageCategoryWithImages(ImageCategoryOut):
     """Category with nested images (avoid circular import)"""
-    from typing import TYPE_CHECKING
-    if TYPE_CHECKING:
-        from app.schemas.image import ImageOut
+    images: List['ImageOut'] = []
     
-    images: list['ImageOut'] = []
+    class Config:
+        from_attributes = True
 
 
 class PaginatedImageCategories(BaseModel):
     count: int
-    data: list[ImageCategoryOut]
+    data: List[ImageCategoryOut]
 
 
 class ImageCategoryListResponse(BaseModel):

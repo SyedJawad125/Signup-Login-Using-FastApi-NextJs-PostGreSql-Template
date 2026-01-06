@@ -158,8 +158,7 @@ from app.database import engine, Base
 from app.models.user import User
 from app.models.role import Role
 from app.models.permission import Permission
-from app.models.image_category import ImageCategory
-from app.models.image import Image
+from app.models.image import Image, ImageCategory
 
 # Import routers
 from app.routers import (
