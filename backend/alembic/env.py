@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.employee import Employee
 from app.models.role import Role
 from app.models.permission import Permission
-from app.models.association_tables import *
+from app.models.associations import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

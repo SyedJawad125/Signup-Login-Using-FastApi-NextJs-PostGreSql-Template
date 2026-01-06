@@ -11,7 +11,7 @@ router = APIRouter()
 UPLOAD_DIR = "static/hotel_images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.post("/upload-image/")
+@router.post("/-image/upload")
 async def upload_image(
     file: UploadFile = File(...),
     name: str = Form(...),

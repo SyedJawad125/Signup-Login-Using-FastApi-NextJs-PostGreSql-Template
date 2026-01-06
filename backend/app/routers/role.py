@@ -1,94 +1,96 @@
-from fastapi import APIRouter, Depends, status, Request, HTTPException
-from sqlalchemy.orm import Session
-from typing import List, Optional, Any
-from .. import database, schemas, models, oauth2
-from app.utils import paginate_data, create_response, filter_roles
-from fastapi.responses import JSONResponse
-from app.dependencies.permission import permission_required, require
+# from fastapi import APIRouter, Depends, status, Request, HTTPException
+# from sqlalchemy.orm import Session
+# from typing import List, Optional, Any
+# from .. import database, schemas, models, oauth2
+# from app.utils import paginate_data, create_response, filter_roles
+# from fastapi.responses import JSONResponse
+# from app.dependencies.permission import permission_required, require
 
 
 
-router = APIRouter(
-    prefix="/roles",
-    tags=['Roles']
-)
+# router = APIRouter(
+#     prefix="/roles",
+#     tags=['Roles']
+# )
 
-# @router.get("/", response_model=List[schemas.Department])
+# # @router.get("/", response_model=List[schemas.Department])
 
-# @router.get("/", response_model=Any)
-@router.get("/", response_model=schemas.RoleListResponse, dependencies=[require("read_role")])
-def get_roles(
-    request: Request,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-    try:
-        query = db.query(models.Role)
-        query = filter_roles(request.query_params, query)
-        data = query.all()
-        paginated_data, count = paginate_data(data, request)
+# # @router.get("/", response_model=Any)
+# @router.get("/", response_model=schemas.RoleListResponse, dependencies=[require("read_role")])
+# def get_roles(
+#     request: Request,
+#     db: Session = Depends(database.get_db),
+#     current_user: models.User = Depends(oauth2.get_current_user),
+# ):
+#     try:
+#         query = db.query(models.Role)
+#         query = filter_roles(request.query_params, query)
+#         data = query.all()
+#         paginated_data, count = paginate_data(data, request)
 
-        # ✅ Convert ORM to Pydantic
-        serialized_data = [schemas.Role.from_orm(perms) for perms in paginated_data]
+#         # ✅ Convert ORM to Pydantic
+#         serialized_data = [schemas.Role.from_orm(perms) for perms in paginated_data]
 
-        response_data = {
-            "count": count,
-            "data": serialized_data
-        }
+#         response_data = {
+#             "count": count,
+#             "data": serialized_data
+#         }
 
-        return {
-            "status": "SUCCESSFUL",
-            "result": response_data
-        }
+#         return {
+#             "status": "SUCCESSFUL",
+#             "result": response_data
+#         }
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
-
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Role, dependencies=[require("create_role")])
-def create_role(
-    role: schemas.RoleCreate,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-) -> Any:
-    try:
-        # Extract permission IDs and remove them from role_data
-        permission_ids = role.permission_ids or []
-        role_data = role.dict(exclude={"permission_ids"})
-        role_data["created_by_user_id"] = current_user.id
-
-        # Create Role instance
-        new_role = models.Role(**role_data)
-
-        # Fetch Permission instances and assign to role
-        if permission_ids:
-            permissions = db.query(models.Permission).filter(models.Permission.id.in_(permission_ids)).all()
-            new_role.permissions = permissions
-
-        db.add(new_role)
-        db.commit()
-        db.refresh(new_role)
-
-        return new_role
-
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 
 
-@router.get("/{id}", response_model=schemas.Role, dependencies=[require("read_role")])
-def get_role(id: int, db: Session = Depends(database.get_db), 
-                  current_user: models.User = Depends(oauth2.get_current_user)):
-    role = db.query(models.Role).filter(models.Role.id == id).first()
-    if not role:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                           detail=f"Role with id {id} not found")
-    return role
+# @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Role, dependencies=[require("create_role")])
+# def create_role(
+#     role: schemas.RoleCreate,
+#     db: Session = Depends(database.get_db),
+#     current_user: models.User = Depends(oauth2.get_current_user)
+# ) -> Any:
+#     try:
+#         # Extract permission IDs and remove them from role_data
+#         permission_ids = role.permission_ids or []
+#         role_data = role.dict(exclude={"permission_ids"})
+#         role_data["created_by_user_id"] = current_user.id
+
+#         # Create Role instance
+#         new_role = models.Role(**role_data)
+
+#         # Fetch Permission instances and assign to role
+#         if permission_ids:
+#             permissions = db.query(models.Permission).filter(models.Permission.id.in_(permission_ids)).all()
+#             new_role.permissions = permissions
+
+#         db.add(new_role)
+#         db.commit()
+#         db.refresh(new_role)
+
+#         return new_role
+
+#     except HTTPException as he:
+#         raise he
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+# @router.get("/{id}", response_model=schemas.Role, dependencies=[require("read_role")])
+# def get_role(id: int, db: Session = Depends(database.get_db), 
+#                   current_user: models.User = Depends(oauth2.get_current_user)):
+#     role = db.query(models.Role).filter(models.Role.id == id).first()
+#     if not role:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+#                            detail=f"Role with id {id} not found")
+#     return role
+
+
 
 # @router.patch("/{id}", response_model=schemas.Role, dependencies=[require("update_role")])
 # def patch_update_role(
@@ -98,8 +100,6 @@ def get_role(id: int, db: Session = Depends(database.get_db),
 #     current_user: models.User = Depends(oauth2.get_current_user)
 # ):
 #     try:
-        
-
 #         role_instance = db.query(models.Role).filter(models.Role.id == id).first()
 
 #         if not role_instance:
@@ -110,8 +110,19 @@ def get_role(id: int, db: Session = Depends(database.get_db),
 
 #         update_data = updated_role.dict(exclude_unset=True)
 
-#         for key, value in update_data.items():
-#             setattr(role_instance, key, value)
+#         # Update basic fields
+#         for key in ['name', 'description', 'code']:
+#             if key in update_data:
+#                 setattr(role_instance, key, update_data[key])
+
+#         # Handle permission_ids manually
+#         if 'permission_ids' in update_data:
+#             # Clear existing permissions
+#             role_instance.permissions.clear()
+
+#             # Add new permissions
+#             permissions = db.query(models.Permission).filter(models.Permission.id.in_(update_data['permission_ids'])).all()
+#             role_instance.permissions.extend(permissions)
 
 #         db.commit()
 #         db.refresh(role_instance)
@@ -126,66 +137,241 @@ def get_role(id: int, db: Session = Depends(database.get_db),
 #             detail=f"An error occurred while patching the Role: {str(e)}"
 #         )
 
-@router.patch("/{id}", response_model=schemas.Role, dependencies=[require("update_role")])
-def patch_update_role(
+
+# # @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+
+# @router.delete("/{id}", status_code=status.HTTP_200_OK)
+# def delete_role(
+#     id: int,
+#     db: Session = Depends(database.get_db),
+#     current_user: models.User = Depends(oauth2.get_current_user),
+#     _: None = Depends(permission_required(["delete_role"]))
+
+# ):
+    
+
+#     role_query = db.query(models.Role).filter(models.Role.id == id)
+#     role = role_query.first()
+
+#     if not role:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"Role with id {id} not found"
+#         )
+
+#     role_query.delete(synchronize_session=False)
+#     db.commit()
+
+#     return {"message": "Role deleted successfully"}
+
+
+
+
+
+# app/api/routers/role.py
+from fastapi import APIRouter, Depends, status, Request, HTTPException
+from sqlalchemy.orm import Session
+from typing import Optional
+
+from app import database, schemas, models, oauth2
+from app.utils import paginate_data, filter_roles
+from app.dependencies.permission import require
+
+
+router = APIRouter(
+    prefix="/roles",
+    tags=['Roles']
+)
+
+
+@router.get("/", response_model=schemas.RoleListResponse, dependencies=[require("read_role")])
+def get_roles(
+    request: Request,
+    skip: int = 0,
+    limit: int = 10,
+    include_deleted: bool = False,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    """Get all roles with pagination and filtering"""
+    try:
+        # Query based on include_deleted flag
+        if include_deleted:
+            query = models.Role.get_all_including_deleted(db)
+        else:
+            query = models.Role.get_active(db)
+        
+        # Apply filters
+        query = filter_roles(request.query_params, query)
+        
+        total = query.count()
+        roles = query.offset(skip).limit(limit).all()
+
+        # Convert ORM to Pydantic
+        serialized_data = [schemas.RoleWithPermissions.from_orm(role) for role in roles]
+
+        return {
+            "status": "success",
+            "result": {
+                "count": total,
+                "data": serialized_data
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("read_role")])
+def get_role(
     id: int,
-    updated_role: schemas.RoleUpdate,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    try:
-        role_instance = db.query(models.Role).filter(models.Role.id == id).first()
+    """Get role by ID"""
+    role = db.query(models.Role).filter(
+        models.Role.id == id,
+        models.Role.deleted == False
+    ).first()
+    
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role with id {id} not found"
+        )
+    
+    return role
 
-        if not role_instance:
+
+@router.post("/", 
+            status_code=status.HTTP_201_CREATED, 
+            response_model=schemas.RoleWithPermissions, 
+            dependencies=[require("create_role")])
+def create_role(
+    role: schemas.RoleCreate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    """Create a new role"""
+    try:
+        # Extract permission IDs
+        permission_ids = role.permission_ids or []
+        role_data = role.dict(exclude={"permission_ids"})
+
+        # Create Role instance with user tracking
+        new_role = models.Role(
+            **role_data,
+            created_by_user_id=current_user.id,
+            updated_by_user_id=current_user.id
+        )
+
+        # Fetch and assign permissions (only non-deleted)
+        if permission_ids:
+            permissions = db.query(models.Permission).filter(
+                models.Permission.id.in_(permission_ids),
+                models.Permission.deleted == False
+            ).all()
+            
+            if len(permissions) != len(permission_ids):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="One or more permission IDs are invalid or deleted"
+                )
+            
+            new_role.permissions = permissions
+
+        db.add(new_role)
+        db.commit()
+        db.refresh(new_role)
+
+        return new_role
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating role: {str(e)}"
+        )
+
+
+@router.patch("/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
+def update_role(
+    id: int,
+    role_update: schemas.RoleUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    """Update role information"""
+    try:
+        role = db.query(models.Role).filter(
+            models.Role.id == id,
+            models.Role.deleted == False
+        ).first()
+
+        if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Role with id {id} not found"
             )
 
-        update_data = updated_role.dict(exclude_unset=True)
+        update_data = role_update.dict(exclude_unset=True)
 
         # Update basic fields
         for key in ['name', 'description', 'code']:
             if key in update_data:
-                setattr(role_instance, key, update_data[key])
+                setattr(role, key, update_data[key])
 
-        # Handle permission_ids manually
-        if 'permission_ids' in update_data:
-            # Clear existing permissions
-            role_instance.permissions.clear()
+        # Handle permission_ids
+        if 'permission_ids' in update_data and update_data['permission_ids'] is not None:
+            permission_ids = update_data['permission_ids']
+            
+            # Fetch permissions (only non-deleted)
+            permissions = db.query(models.Permission).filter(
+                models.Permission.id.in_(permission_ids),
+                models.Permission.deleted == False
+            ).all()
+            
+            if len(permissions) != len(permission_ids):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="One or more permission IDs are invalid or deleted"
+                )
+            
+            # Update permissions
+            role.permissions = permissions
 
-            # Add new permissions
-            permissions = db.query(models.Permission).filter(models.Permission.id.in_(update_data['permission_ids'])).all()
-            role_instance.permissions.extend(permissions)
+        # Track who updated
+        role.updated_by_user_id = current_user.id
 
         db.commit()
-        db.refresh(role_instance)
+        db.refresh(role)
 
-        return role_instance
+        return role
 
-    except HTTPException as he:
-        raise he
+    except HTTPException:
+        raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while patching the Role: {str(e)}"
+            detail=f"Error updating role: {str(e)}"
         )
 
 
-# @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-
-@router.delete("/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/{id}", status_code=status.HTTP_200_OK, dependencies=[require("delete_role")])
 def delete_role(
     id: int,
+    permanent: bool = False,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-    _: None = Depends(permission_required(["delete_role"]))
-
+    current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    
-
-    role_query = db.query(models.Role).filter(models.Role.id == id)
-    role = role_query.first()
+    """Soft delete role (or permanent delete if superuser)"""
+    role = db.query(models.Role).filter(models.Role.id == id).first()
 
     if not role:
         raise HTTPException(
@@ -193,127 +379,51 @@ def delete_role(
             detail=f"Role with id {id} not found"
         )
 
-    role_query.delete(synchronize_session=False)
-    db.commit()
-
-    return {"message": "Role deleted successfully"}
-
-
-
-
-# @router.post("/login")
-# def login(user_credentials: schemas.LoginRequest, db: Session = Depends(database.get_db)):
-#     # Step 1: Authenticate user
-#     user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
+    # Check if role is assigned to any active users
+    active_users_count = db.query(models.User).filter(
+        models.User.role_id == id,
+        models.User.deleted == False
+    ).count()
     
-#     if not user or not utils.verify_password(user_credentials.password, user.hashed_password):
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Incorrect email or password"
-#         )
+    if active_users_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete role. It is assigned to {active_users_count} active user(s)."
+        )
 
-#     # Step 2: (Optional) Check if user is active
-#     if hasattr(user, "is_active") and not user.is_active:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Account is disabled"
-#         )
-
-#     # Step 3: Load all permissions to prepare a permission map
-#     all_permissions = db.query(models.Permission).all()
-#     permissions_dict = {perm.code: False for perm in all_permissions}
-
-#     # Step 4: Assign permissions
-#     if user.is_superuser and not user.role:
-#         # Superuser with no role gets full access
-#         for perm in all_permissions:
-#             permissions_dict[perm.code] = True
-#     elif user.role:
-#         # Regular user or superuser with a role gets role-specific permissions
-#         for perm in user.role.permissions:
-#             permissions_dict[perm.code] = True
-#     else:
-#         # No role assigned
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="User has no role assigned"
-#         )
-
-#     # Step 5: Create access token
-#     access_token = oauth2.create_access_token(data={"user_id": user.id})
-
-#     # Step 6: Return full response
-#     return {
-#         "message": "Successful",
-#         "access_token": access_token,
-#         "token_type": "bearer",
-#         "user_id": user.id,
-#         "username": user.username,
-#         "email": user.email,
-#         "is_superuser": bool(user.is_superuser),  # ✅ Always return true or false correctly
-#         "role_id": user.role.id if user.role else None,
-#         "role_name": user.role.name if user.role else None,
-#         "permissions": permissions_dict
-#     }
+    if permanent and current_user.is_superuser:
+        # Permanent delete (hard delete) - only for superusers
+        db.delete(role)
+        db.commit()
+        return {"message": "Role permanently deleted"}
+    else:
+        # Soft delete with user tracking
+        role.soft_delete(user_id=current_user.id)
+        db.commit()
+        return {"message": "Role soft deleted successfully"}
 
 
+@router.post("/{id}/restore", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
+def restore_role(
+    id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    """Restore a soft-deleted role"""
+    role = db.query(models.Role).filter(
+        models.Role.id == id,
+        models.Role.deleted == True
+    ).first()
 
-# @router.post("/login")
-# def login(user_credentials: schemas.LoginRequest, db: Session = Depends(database.get_db)):
-#     # Step 1: Authenticate user
-#     user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Deleted role with id {id} not found"
+        )
 
-#     if not user or not utils.verify_password(user_credentials.password, user.hashed_password):
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Incorrect email or password"
-#         )
+    role.restore()
+    role.updated_by_user_id = current_user.id
+    db.commit()
+    db.refresh(role)
 
-#     # Step 2: Check if user is active (optional)
-#     if hasattr(user, "is_active") and not user.is_active:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Account is disabled"
-#         )
-
-#     # Step 3: Load all permissions and initialize permissions_dict
-#     all_permissions = db.query(models.Permission).all()
-#     permissions_dict = {perm.code: False for perm in all_permissions}
-
-#     # Step 4: Determine is_superuser based on role
-#     is_superuser_response = False
-
-#     if user.is_superuser and not user.role:
-#         # Superuser with no role: grant all permissions
-#         for perm in all_permissions:
-#             permissions_dict[perm.code] = True
-#         is_superuser_response = True
-
-#     elif user.role:
-#         # Role-based user (even if is_superuser in DB): only assign role permissions
-#         for perm in user.role.permissions:
-#             permissions_dict[perm.code] = True
-
-#     else:
-#         # No role and not a superuser => invalid user setup
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="User has no role assigned"
-#         )
-
-#     # Step 5: Create access token
-#     access_token = oauth2.create_access_token(data={"user_id": user.id})
-
-#     # Step 6: Return full response
-#     return {
-#         "message": "Successful",
-#         "access_token": access_token,
-#         "token_type": "bearer",
-#         "user_id": user.id,
-#         "username": user.username,
-#         "email": user.email,
-#         "is_superuser": is_superuser_response,  # ✅ True only if superuser AND no role
-#         "role_id": user.role.id if user.role else None,
-#         "role_name": user.role.name if user.role else None,
-#         "permissions": permissions_dict
-#     }
+    return role

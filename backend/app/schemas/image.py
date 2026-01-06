@@ -1,81 +1,41 @@
 # from typing import Optional
-# from pydantic import BaseModel
+# from pydantic import BaseModel, Field
 # from datetime import datetime
-# from .image_category import ImageCategory
+# from .image_category import ImageCategoryOut  # ✅ Correct import
 
-# # Shared base schema
+
 # class ImageBase(BaseModel):
-#     name: Optional[str]
-#     description: Optional[str]
-#     bulletsdescription: Optional[str]
-#     category_id: Optional[int]
+#     name: Optional[str] = Field(None, max_length=30)
+#     description: Optional[str] = Field(None, max_length=500)
+#     category_id: Optional[int] = None
 
-# # Schema for image creation (client cannot set internal fields)
 # class ImageCreate(ImageBase):
-#     pass
-
-# # Schema for image update (file metadata allowed, but not user info)
-# class ImageUpdate(ImageBase):
-#     image_path: Optional[str]
-#     original_filename: Optional[str]
-#     file_size: Optional[int]
-#     mime_type: Optional[str]
-
-# # Schema for API response
-# class ImageOut(ImageBase):
-#     id: int
+#     # Required fields for creation
+#     created_by_user_id: int
+#     updated_by_user_id: int
 #     image_path: str
-#     original_filename: Optional[str]
-#     file_size: Optional[int]
-#     mime_type: Optional[str]
-#     upload_date: datetime
-#     created_by_user_id: Optional[int]
-#     updated_by_user_id: Optional[int]
-#     category: Optional[ImageCategory] = None
-
-#     class Config:
-#         from_attributes = True
-
-# # Schema for paginated list response
-# class PaginatedImages(BaseModel):
-#     count: int
-#     data: list[ImageOut]
-
-# # API response wrapper
-# class ImageListResponse(BaseModel):
-#     status: str
-#     result: PaginatedImages
-
-
-
-# from typing import Optional
-# from pydantic import BaseModel
-# from datetime import datetime
-# from .image_category import ImageCategory
-
-# class ImageBase(BaseModel):
-#     name: Optional[str]
-#     description: Optional[str]
-#     bulletsdescription: Optional[str]
-#     category_id: Optional[int]
-
-# class ImageCreate(ImageBase):
-#     pass
+    
+#     # Optional file metadata that should come from the uploaded file
+#     original_filename: Optional[str] = None
+#     file_size: Optional[int] = None
+#     mime_type: Optional[str] = None
 
 # class ImageUpdate(ImageBase):
-#     image_path: Optional[str]
-#     original_filename: Optional[str]
-#     file_size: Optional[int]
-#     mime_type: Optional[str]
+#     image_path: Optional[str] = None
+#     original_filename: Optional[str] = None
+#     file_size: Optional[int] = None
+#     mime_type: Optional[str] = None
+#     updated_by_user_id: Optional[int] = None
+
 
 # class ImageOut(ImageBase):
 #     id: int
-#     image_path: str
-#     original_filename: Optional[str]
-#     file_size: Optional[int]
-#     mime_type: Optional[str]
+#     image_path: str  # Make sure this is not optional in the response
 #     upload_date: datetime
-#     category: Optional[ImageCategory] = None
+#     created_by_user_id: int  # Changed from Optional to required
+#     updated_by_user_id: Optional[int] = None  # Keep as Optional
+#     # category: Optional[ImageCategory] = None
+#     category: Optional[ImageCategoryOut] = None  # Use the response schema
 
 #     class Config:
 #         from_attributes = True
@@ -89,11 +49,11 @@
 #     result: PaginatedImages
 
 
-
+# app/schemas/image.py
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
-from pydantic import BaseModel, Field
 from datetime import datetime
-from .image_category import ImageCategoryOut  # ✅ Correct import
+from app.schemas.base import TimeUserStampSchema
 
 
 class ImageBase(BaseModel):
@@ -101,41 +61,52 @@ class ImageBase(BaseModel):
     description: Optional[str] = Field(None, max_length=500)
     category_id: Optional[int] = None
 
+
 class ImageCreate(ImageBase):
-    # Required fields for creation
-    created_by_user_id: int
-    updated_by_user_id: int
+    """Schema for image creation - no need to pass user IDs or upload_date"""
+    # These will be set by the endpoint from auth and file upload
+    pass
+    
+    class Config:
+        extra = "forbid"
+
+
+class ImageUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=30)
+    description: Optional[str] = Field(None, max_length=500)
+    category_id: Optional[int] = None
+    
+    class Config:
+        extra = "forbid"
+
+
+class ImageOut(ImageBase, TimeUserStampSchema):
+    """Full image response with all mixin fields"""
+    id: int
     image_path: str
     
-    # Optional file metadata that should come from the uploaded file
-    original_filename: Optional[str] = None
-    file_size: Optional[int] = None
-    mime_type: Optional[str] = None
-
-class ImageUpdate(ImageBase):
-    image_path: Optional[str] = None
-    original_filename: Optional[str] = None
-    file_size: Optional[int] = None
-    mime_type: Optional[str] = None
-    updated_by_user_id: Optional[int] = None
-
-
-class ImageOut(ImageBase):
-    id: int
-    image_path: str  # Make sure this is not optional in the response
-    upload_date: datetime
-    created_by_user_id: int  # Changed from Optional to required
-    updated_by_user_id: Optional[int] = None  # Keep as Optional
-    # category: Optional[ImageCategory] = None
-    category: Optional[ImageCategoryOut] = None  # Use the response schema
-
     class Config:
         from_attributes = True
 
+
+class ImageWithCategory(ImageOut):
+    """Image with category details"""
+    from app.schemas.image_category import ImageCategoryOut
+    category: Optional[ImageCategoryOut] = None
+
+
 class PaginatedImages(BaseModel):
     count: int
-    data: list[ImageOut]
+    data: list[ImageWithCategory]
+
 
 class ImageListResponse(BaseModel):
     status: str
     result: PaginatedImages
+
+
+class ImageUploadResponse(BaseModel):
+    """Response after successful image upload"""
+    status: str
+    message: str
+    data: ImageOut
