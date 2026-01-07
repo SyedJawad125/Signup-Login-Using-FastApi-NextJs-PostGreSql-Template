@@ -143,12 +143,12 @@ from app.dependencies.permission import require
 
 
 router = APIRouter(
-    prefix="/image-categories",
+    prefix="/image/categories",
     tags=['Image Categories']
 )
 
 
-@router.get("/", response_model=schemas.ImageCategoryListResponse, dependencies=[require("read_image_category")])
+@router.get("/v1/category/", response_model=schemas.ImageCategoryListResponse, dependencies=[require("read_image_category")])
 def get_image_categories(
     request: Request,
     skip: int = 0,
@@ -189,7 +189,7 @@ def get_image_categories(
         )
 
 
-@router.get("/{id}", response_model=schemas.ImageCategoryOut, dependencies=[require("read_image_category")])
+@router.get("/v1/category/{id}", response_model=schemas.ImageCategoryOut, dependencies=[require("read_image_category")])
 def get_image_category(
     id: int,
     db: Session = Depends(database.get_db),
@@ -210,7 +210,7 @@ def get_image_category(
     return category
 
 
-@router.post("/", 
+@router.post("/v1/category/", 
             status_code=status.HTTP_201_CREATED, 
             response_model=schemas.ImageCategoryOut, 
             dependencies=[require("create_image_category")])
@@ -226,7 +226,7 @@ def create_image_category(
         new_category = models.ImageCategory(
             **category_data,
             created_by_user_id=current_user.id,
-            updated_by_user_id=current_user.id
+            updated_by_user_id=None  # Explicitly set to None
         )
         
         db.add(new_category)
@@ -245,7 +245,7 @@ def create_image_category(
         )
 
 
-@router.patch("/{id}", 
+@router.patch("/v1/category/{id}", 
              response_model=schemas.ImageCategoryOut, 
              dependencies=[require("update_image_category")])
 def update_image_category(
@@ -291,7 +291,7 @@ def update_image_category(
         )
 
 
-@router.delete("/{id}", 
+@router.delete("/v1/category/{id}", 
               status_code=status.HTTP_200_OK, 
               dependencies=[require("delete_image_category")])
 def delete_image_category(
