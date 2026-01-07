@@ -143,7 +143,7 @@ from app.dependencies.permission import require
 
 
 router = APIRouter(
-    prefix="/image/categories",
+    prefix="/api/categories",
     tags=['Image Categories']
 )
 
