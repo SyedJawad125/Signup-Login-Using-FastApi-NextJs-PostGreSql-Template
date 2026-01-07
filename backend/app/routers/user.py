@@ -358,7 +358,7 @@ from app.database import get_db
 
 
 router = APIRouter(
-    prefix="/users",
+    prefix="/api/user",
     tags=['Users']
 )
 
@@ -435,7 +435,7 @@ async def create_user(
         )
 
 
-@router.post("/login")
+@router.post("/v1/login/")
 def login(
     user_credentials: schemas.LoginRequest, 
     db: Session = Depends(get_db)

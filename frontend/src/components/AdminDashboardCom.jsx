@@ -1,255 +1,197 @@
-import React, { useState, useEffect } from 'react';
-import { Bar, Pie } from 'react-chartjs-2';
+import React from 'react';
+import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
-import { FiUsers, FiShoppingCart, FiDollarSign, FiPackage, FiClock, FiCalendar } from 'react-icons/fi';
+import { TrendingUp, ShoppingCart, Users, Package, DollarSign, Clock, CheckCircle, Truck } from 'lucide-react';
 
 const AdminPage = () => {
-  const [isClient, setIsClient] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
-  useEffect(() => {
-    setIsClient(true); // This will only run on client side
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  const salesData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  const chartData = {
+    labels: ['January', 'February', 'March', 'April', 'May', 'June'],
     datasets: [
       {
-        label: 'Sales',
-        data: [12500, 19000, 8000, 15000, 22000, 18000],
-        backgroundColor: 'rgba(101, 163, 13, 0.8)',
-        borderRadius: 6,
+        label: 'Sales ($)',
+        data: [12000, 19000, 15000, 22000, 18000, 25000],
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
       },
     ],
   };
 
-  const revenueData = {
-    labels: ['Products', 'Services', 'Subscriptions'],
-    datasets: [
-      {
-        data: [65, 25, 10],
-        backgroundColor: [
-          'rgba(101, 163, 13, 0.8)',
-          'rgba(202, 138, 4, 0.8)',
-          'rgba(124, 58, 237, 0.8)'
-        ],
-        borderWidth: 0,
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
       },
-    ],
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(148, 163, 184, 0.1)',
+        },
+        ticks: {
+          color: '#94a3b8',
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#94a3b8',
+        },
+      },
+    },
   };
 
   const stats = [
-    { title: "Total Users", value: "2,456", icon: <FiUsers className="text-2xl text-black" />, change: "+12%" },
-    { title: "Total Orders", value: "1,230", icon: <FiShoppingCart className="text-2xl text-black" />, change: "+8%" },
-    { title: "Revenue", value: "$34,567", icon: <FiDollarSign className="text-2xl text-black" />, change: "+23%" },
-    { title: "Products", value: "567", icon: <FiPackage className="text-2xl text-black" />, change: "+5%" },
+    { title: 'Total Revenue', value: '$111,000', change: '+12.5%', icon: DollarSign, color: 'from-blue-500 to-blue-600', bgColor: 'from-blue-900/20 to-blue-950/30', borderColor: 'border-blue-700/30' },
+    { title: 'Total Orders', value: '1,234', change: '+8.2%', icon: ShoppingCart, color: 'from-emerald-500 to-emerald-600', bgColor: 'from-emerald-900/20 to-emerald-950/30', borderColor: 'border-emerald-700/30' },
+    { title: 'Customers', value: '856', change: '+15.3%', icon: Users, color: 'from-purple-500 to-purple-600', bgColor: 'from-purple-900/20 to-purple-950/30', borderColor: 'border-purple-700/30' },
+    { title: 'Products', value: '342', change: '+4.1%', icon: Package, color: 'from-amber-500 to-amber-600', bgColor: 'from-amber-900/20 to-amber-950/30', borderColor: 'border-amber-700/30' },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Top Navigation */}
-      <header className="bg-gradient-to-r from-emerald-800 to-emerald-600 text-black p-4 shadow-lg">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">LUXE ADMIN</h1>
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2 bg-emerald-700/50 px-4 py-2 rounded-lg text-white">
-              <FiCalendar className="text-white" />
-              {isClient && (
-                <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-              )}
-            </div>
-            <div className="flex items-center space-x-2 bg-emerald-700/50 px-4 py-2 rounded-lg text-white">
-              <FiClock className="text-white" />
-              {isClient && (
-                <span>{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-              )}
-            </div>
-            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
-              <span className="font-bold">AD</span>
-            </div>
-          </div>
-        </div>
-      </header>
+  const recentOrders = [
+    { id: '001', customer: 'John Doe', status: 'Shipped', total: '$150.00', statusColor: 'emerald', icon: Truck },
+    { id: '002', customer: 'Jane Smith', status: 'Processing', total: '$200.00', statusColor: 'amber', icon: Clock },
+    { id: '003', customer: 'Mike Johnson', status: 'Delivered', total: '$250.00', statusColor: 'blue', icon: CheckCircle },
+    { id: '004', customer: 'Sarah Williams', status: 'Processing', total: '$180.00', statusColor: 'amber', icon: Clock },
+    { id: '005', customer: 'Tom Brown', status: 'Shipped', total: '$320.00', statusColor: 'emerald', icon: Truck },
+  ];
 
-      {/* Rest of your component remains the same */}
-      {/* Main Content */}
-      <div className="container mx-auto p-4">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-emerald-700 to-emerald-500 text-white p-6 rounded-xl shadow-lg mb-6">
-          <h1 className="text-3xl font-bold mb-2 text-white">Welcome Back, Admin</h1>
-          <p className="text-white max-w-2xl">
-            Here's what's happening with your store today. You have 12 new orders, 5 pending reviews, and 3 customer messages waiting.
+  const getStatusColor = (color) => {
+    const colors = {
+      emerald: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+      amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    };
+    return colors[color] || colors.amber;
+  };
+
+  return (
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 overflow-auto">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 mb-8 shadow-2xl shadow-blue-500/20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold text-white mb-3">Welcome to Admin Dashboard</h1>
+          <p className="text-white/90 text-lg mb-2">
+            Complete control over your E-Commerce platform
+          </p>
+          <p className="text-white/80 text-sm">
+            Monitor sales, manage orders, and track your business growth in real-time
           </p>
         </div>
+        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -left-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-black text-sm font-medium">{stat.title}</p>
-                  <h3 className="text-2xl font-bold mt-1 text-black">{stat.value}</h3>
-                  <p className={`text-sm mt-2 ${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                    {stat.change} from last month
-                  </p>
-                </div>
-                <div className="p-3 bg-emerald-100 rounded-lg text-black">
-                  {stat.icon}
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={index}
+              className={`bg-gradient-to-br ${stat.bgColor} backdrop-blur-sm border ${stat.borderColor} rounded-xl p-6 hover:border-opacity-60 transition-all duration-300 hover:transform hover:scale-105`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-slate-400 text-sm font-medium">{stat.title}</span>
+                <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-lg shadow-lg`}>
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
+              <div className="flex items-end justify-between">
+                <p className="text-3xl font-bold text-white">{stat.value}</p>
+                <span className="text-emerald-400 text-sm font-semibold flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4" />
+                  {stat.change}
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-black">Sales Overview</h2>
-              <select className="bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm text-black">
-                <option>Last 6 Months</option>
-                <option>Last Year</option>
-                <option>Last 3 Years</option>
-              </select>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Sales Overview Chart */}
+        <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600/60 transition-all">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-1">Sales Overview</h2>
+              <p className="text-slate-400 text-sm">Monthly revenue trend</p>
             </div>
-            <div className="h-80">
-              <Bar 
-                data={salesData} 
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                      },
-                      ticks: {
-                        color: 'black',
-                        callback: function(value) {
-                          return '$' + value.toLocaleString();
-                        }
-                      }
-                    },
-                    x: {
-                      grid: {
-                        display: false
-                      },
-                      ticks: {
-                        color: 'black'
-                      }
-                    }
-                  },
-                  plugins: {
-                    legend: {
-                      display: false,
-                      labels: {
-                        color: 'black'
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                            return '$' + context.raw.toLocaleString();
-                        }
-                      }
-                    }
-                  }
-                }} 
-              />
+            <div className="p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg shadow-lg">
+              <TrendingUp className="w-6 h-6 text-white" />
             </div>
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-xl font-bold mb-4 text-black">Revenue Sources</h2>
-            <div className="h-80">
-              <Pie 
-                data={revenueData} 
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        color: 'black'
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          return context.label + ': ' + context.raw + '%';
-                        }
-                      }
-                    }
-                  }
-                }} 
-              />
-            </div>
+          <div className="h-72">
+            <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white p-6 rounded-xl shadow-md mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-black">Recent Orders</h2>
-            <button className="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
-              View All
-            </button>
+        <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600/60 transition-all">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-1">Recent Orders</h2>
+              <p className="text-slate-400 text-sm">Latest customer transactions</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg shadow-lg">
+              <ShoppingCart className="w-6 h-6 text-white" />
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="pb-3 font-medium text-black">Order ID</th>
-                  <th className="pb-3 font-medium text-black">Customer</th>
-                  <th className="pb-3 font-medium text-black">Date</th>
-                  <th className="pb-3 font-medium text-black">Status</th>
-                  <th className="pb-3 font-medium text-right text-black">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { id: '#ORD-0001', customer: 'Olivia Martin', date: 'May 15, 2023', status: 'Completed', amount: '$125.00' },
-                  { id: '#ORD-0002', customer: 'Ava Johnson', date: 'May 15, 2023', status: 'Processing', amount: '$89.50' },
-                  { id: '#ORD-0003', customer: 'Michael Williams', date: 'May 14, 2023', status: 'Shipped', amount: '$234.00' },
-                  { id: '#ORD-0004', customer: 'Emma Brown', date: 'May 14, 2023', status: 'Completed', amount: '$156.75' },
-                  { id: '#ORD-0005', customer: 'James Wilson', date: 'May 13, 2023', status: 'Pending', amount: '$342.00' },
-                ].map((order, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-4 font-medium text-black">{order.id}</td>
-                    <td className="py-4 text-black">{order.customer}</td>
-                    <td className="py-4 text-black">{order.date}</td>
-                    <td className="py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        order.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        order.status === 'Processing' ? 'bg-blue-100 text-blue-800' :
-                        order.status === 'Shipped' ? 'bg-purple-100 text-purple-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-4 text-right font-medium text-black">{order.amount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="space-y-3">
+            {recentOrders.map((order) => {
+              const StatusIcon = order.icon;
+              return (
+                <div
+                  key={order.id}
+                  className="bg-slate-900/50 border border-slate-700/30 rounded-lg p-4 hover:border-slate-600/50 transition-all hover:bg-slate-800/50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-sm">{order.id}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold mb-1">{order.customer}</p>
+                        <div className="flex items-center gap-2">
+                          <StatusIcon className="w-3.5 h-3.5 text-slate-400" />
+                          <span className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(order.statusColor)}`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-bold text-lg">{order.total}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          <button className="w-full mt-4 py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-slate-600/50 text-white rounded-lg transition-all font-medium">
+            View All Orders
+          </button>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-white p-4 border-t">
-        <div className="container mx-auto text-center text-black text-sm">
-          © {new Date().getFullYear()} Luxe Admin Dashboard. All rights reserved.
-        </div>
+      <footer className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 text-center">
+        <p className="text-slate-400">
+          © 2024 E-Commerce Admin Dashboard • All Rights Reserved
+        </p>
+        <p className="text-slate-500 text-sm mt-2">
+          Built with ❤️ for modern business management
+        </p>
       </footer>
     </div>
   );
