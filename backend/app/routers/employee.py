@@ -365,7 +365,7 @@ from app.dependencies.permission import require
 
 
 router = APIRouter(
-    prefix="/employees",
+    prefix="/api/employees",
     tags=['Employees']
 )
 
@@ -381,7 +381,7 @@ def invalidate_employee_cache():
             print(f"Cache invalidation error: {e}")
 
 
-@router.get("/", response_model=schemas.EmployeeListResponse, dependencies=[require("read_employee")])
+@router.get("/v1/employee/", response_model=schemas.EmployeeListResponse, dependencies=[require("read_employee")])
 def get_employees(
     request: Request,
     skip: int = 0,
@@ -457,7 +457,7 @@ def get_employees(
         )
 
 
-@router.get("/{id}", response_model=schemas.EmployeeOut, dependencies=[require("read_employee")])
+@router.get("/v1/employee/{id}", response_model=schemas.EmployeeOut, dependencies=[require("read_employee")])
 def get_employee(
     id: int,
     db: Session = Depends(database.get_db),
@@ -478,7 +478,7 @@ def get_employee(
     return employee
 
 
-@router.post("/", 
+@router.post("/v1/employee/", 
             status_code=status.HTTP_201_CREATED, 
             response_model=schemas.EmployeeOut, 
             dependencies=[require("create_employee")])
@@ -511,7 +511,7 @@ def create_employee(
         new_employee = models.Employee(
             **employee_data,
             created_by_user_id=current_user.id,
-            updated_by_user_id=current_user.id
+            updated_by_user_id=None
         )
         
         db.add(new_employee)
@@ -533,7 +533,7 @@ def create_employee(
         )
 
 
-@router.patch("/{id}", response_model=schemas.EmployeeOut, dependencies=[require("update_employee")])
+@router.patch("/v1/employee/{id}", response_model=schemas.EmployeeOut, dependencies=[require("update_employee")])
 def update_employee(
     id: int,
     employee_update: schemas.EmployeeUpdate,
@@ -593,7 +593,7 @@ def update_employee(
         )
 
 
-@router.delete("/{id}", status_code=status.HTTP_200_OK, dependencies=[require("delete_employee")])
+@router.delete("/v1/employee/{id}", status_code=status.HTTP_200_OK, dependencies=[require("delete_employee")])
 def delete_employee(
     id: int,
     permanent: bool = False,
@@ -625,7 +625,7 @@ def delete_employee(
         return {"message": "Employee soft deleted successfully"}
 
 
-@router.post("/{id}/restore", response_model=schemas.EmployeeOut, dependencies=[require("update_employee")])
+@router.post("/v1/employee/{id}/restore", response_model=schemas.EmployeeOut, dependencies=[require("update_employee")])
 def restore_employee(
     id: int,
     db: Session = Depends(database.get_db),
@@ -654,7 +654,7 @@ def restore_employee(
     return employee
 
 
-@router.post("/bulk-upload", dependencies=[require("create_employee")])
+@router.post("/v1/employee/bulk/upload/", dependencies=[require("create_employee")])
 async def upload_employees_bulk(
     file: UploadFile = File(...),
     db: Session = Depends(database.get_db),
@@ -746,7 +746,7 @@ async def upload_employees_bulk(
                     job_title=job_title,
                     salary=salary,
                     created_by_user_id=current_user.id,
-                    updated_by_user_id=current_user.id
+                    updated_by_user_id=None
                 )
                 
                 db.add(employee)

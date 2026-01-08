@@ -157,12 +157,12 @@ from app.utils import paginate_data, filter_permissions
 
 
 router = APIRouter(
-    prefix="/permissions",
+    prefix="/api/permissions",
     tags=['Permissions']
 )
 
 
-@router.get("/", response_model=schemas.PermissionListResponse)
+@router.get("/v1/permission/", response_model=schemas.PermissionListResponse)
 def get_permissions(
     request: Request,
     skip: int = 0,
@@ -203,7 +203,7 @@ def get_permissions(
         )
 
 
-@router.get("/{id}", response_model=schemas.PermissionOut)
+@router.get("/v1/permission/{id}", response_model=schemas.PermissionOut)
 def get_permission(
     id: int,
     db: Session = Depends(database.get_db),
@@ -224,7 +224,7 @@ def get_permission(
     return permission
 
 
-@router.post("/", 
+@router.post("/v1/permission/", 
             status_code=status.HTTP_201_CREATED, 
             response_model=schemas.PermissionOut)
 def create_permission(
@@ -239,7 +239,7 @@ def create_permission(
         new_permission = models.Permission(
             **permission_data,
             created_by_user_id=current_user.id,
-            updated_by_user_id=current_user.id
+            updated_by_user_id=None
         )
         
         db.add(new_permission)
@@ -258,7 +258,7 @@ def create_permission(
         )
 
 
-@router.patch("/{id}", response_model=schemas.PermissionOut)
+@router.patch("/v1/permission/{id}", response_model=schemas.PermissionOut)
 def update_permission(
     id: int,
     permission_update: schemas.PermissionUpdate,
@@ -302,7 +302,7 @@ def update_permission(
         )
 
 
-@router.delete("/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/v1/permission/{id}", status_code=status.HTTP_200_OK)
 def delete_permission(
     id: int,
     permanent: bool = False,
@@ -361,7 +361,7 @@ def delete_permission(
         return {"message": "Permission soft deleted successfully"}
 
 
-@router.post("/{id}/restore", response_model=schemas.PermissionOut)
+@router.post("/v1/permission/{id}/restore", response_model=schemas.PermissionOut)
 def restore_permission(
     id: int,
     db: Session = Depends(database.get_db),

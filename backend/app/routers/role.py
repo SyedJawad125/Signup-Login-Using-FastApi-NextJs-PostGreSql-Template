@@ -179,12 +179,12 @@ from app.dependencies.permission import require
 
 
 router = APIRouter(
-    prefix="/roles",
+    prefix="/api/roles",
     tags=['Roles']
 )
 
 
-@router.get("/", response_model=schemas.RoleListResponse, dependencies=[require("read_role")])
+@router.get("/v1/role/", response_model=schemas.RoleListResponse, dependencies=[require("read_role")])
 def get_roles(
     request: Request,
     skip: int = 0,
@@ -225,7 +225,7 @@ def get_roles(
         )
 
 
-@router.get("/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("read_role")])
+@router.get("/v1/role/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("read_role")])
 def get_role(
     id: int,
     db: Session = Depends(database.get_db),
@@ -246,7 +246,7 @@ def get_role(
     return role
 
 
-@router.post("/", 
+@router.post("/v1/role/", 
             status_code=status.HTTP_201_CREATED, 
             response_model=schemas.RoleWithPermissions, 
             dependencies=[require("create_role")])
@@ -265,7 +265,7 @@ def create_role(
         new_role = models.Role(
             **role_data,
             created_by_user_id=current_user.id,
-            updated_by_user_id=current_user.id
+            updated_by_user_id=None
         )
 
         # Fetch and assign permissions (only non-deleted)
@@ -299,7 +299,7 @@ def create_role(
         )
 
 
-@router.patch("/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
+@router.patch("/v1/role/{id}", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
 def update_role(
     id: int,
     role_update: schemas.RoleUpdate,
@@ -363,7 +363,7 @@ def update_role(
         )
 
 
-@router.delete("/{id}", status_code=status.HTTP_200_OK, dependencies=[require("delete_role")])
+@router.delete("/v1/role/{id}", status_code=status.HTTP_200_OK, dependencies=[require("delete_role")])
 def delete_role(
     id: int,
     permanent: bool = False,
@@ -403,7 +403,7 @@ def delete_role(
         return {"message": "Role soft deleted successfully"}
 
 
-@router.post("/{id}/restore", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
+@router.post("/v1/role/{id}/restore", response_model=schemas.RoleWithPermissions, dependencies=[require("update_role")])
 def restore_role(
     id: int,
     db: Session = Depends(database.get_db),

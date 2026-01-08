@@ -363,7 +363,7 @@ router = APIRouter(
 )
 
 
-@router.post("/signup", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/v1/signup/", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: schemas.UserCreate, 
     db: Session = Depends(get_db)
@@ -510,7 +510,7 @@ def login(
     return JSONResponse(status_code=status.HTTP_200_OK, content=response_data)
 
 
-@router.get("/me", response_model=schemas.UserOut)
+@router.get("/v1/me/", response_model=schemas.UserOut)
 def get_current_user_profile(
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -518,7 +518,7 @@ def get_current_user_profile(
     return current_user
 
 
-@router.get("/", response_model=schemas.UserListResponse)
+@router.get("/v1/all/users/", response_model=schemas.UserListResponse)
 def get_all_users(
     skip: int = 0,
     limit: int = 10,
