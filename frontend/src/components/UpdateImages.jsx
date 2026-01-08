@@ -721,15 +721,22 @@ const UpdateImagesPage = () => {
     setIsLoading(true);
     
     try {
-      // GET /api/images/v1/image/byid/{image_id}
+      console.log('🔍 Fetching image with ID:', imageId);
+      
       const response = await AxiosInstance.get(`/api/images/v1/image/byid/${imageId}`);
       
-      console.log('Fetch image response:', response.data);
+      console.log('✅ Fetch image response:', response.data);
       
-      // Backend returns the image object directly
       const imageData = response.data;
       
       if (imageData) {
+        console.log('📸 Image data loaded:', {
+          id: imageData.id,
+          name: imageData.name,
+          image_path: imageData.image_path,
+          normalized_path: imageData.image_path?.replace(/\\/g, '/')
+        });
+        
         setOriginalData(imageData);
         setFormData({
           name: imageData.name || '',
@@ -737,14 +744,18 @@ const UpdateImagesPage = () => {
           category_id: imageData.category_id || '',
           file: null
         });
-        setCurrentImageUrl(imageData.image_path || null);
+        
+        const imagePath = imageData.image_path || null;
+        setCurrentImageUrl(imagePath);
+        
+        console.log('🖼️ Current image URL set:', imagePath);
       } else {
         toast.error('Failed to load image data');
         router.push('/imagespage');
       }
       
     } catch (error) {
-      console.error('Error fetching image:', error);
+      console.error('❌ Error fetching image:', error);
       
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
@@ -771,6 +782,7 @@ const UpdateImagesPage = () => {
       
       if (res.data && res.data.result && res.data.result.data) {
         setCategories(res.data.result.data);
+        console.log('✅ Categories loaded:', res.data.result.data.length);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -786,7 +798,6 @@ const UpdateImagesPage = () => {
       ...prev,
       [name]: value
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -800,7 +811,6 @@ const UpdateImagesPage = () => {
     
     if (!file) return;
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setErrors(prev => ({
@@ -810,8 +820,7 @@ const UpdateImagesPage = () => {
       return;
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       setErrors(prev => ({
         ...prev,
@@ -825,7 +834,6 @@ const UpdateImagesPage = () => {
       file: file
     }));
 
-    // Clear error
     if (errors.file) {
       setErrors(prev => ({
         ...prev,
@@ -833,10 +841,10 @@ const UpdateImagesPage = () => {
       }));
     }
 
-    // Create preview URL
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result);
+      console.log('✅ Preview URL created for new image');
     };
     reader.readAsDataURL(file);
   };
@@ -847,11 +855,11 @@ const UpdateImagesPage = () => {
       file: null
     }));
     setPreviewUrl(null);
-    // Clear file input
     const fileInput = document.getElementById('file');
     if (fileInput) {
       fileInput.value = '';
     }
+    console.log('🗑️ New image file cleared');
   };
 
   const validateForm = () => {
@@ -899,15 +907,13 @@ const UpdateImagesPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Create FormData for multipart/form-data update
       const uploadData = new FormData();
       
-      // Add file if changed (optional)
       if (formData.file) {
         uploadData.append('file', formData.file);
+        console.log('📎 New file attached for upload');
       }
       
-      // Add other fields (always include them as they might have changed)
       uploadData.append('name', formData.name.trim());
       
       if (formData.description && formData.description.trim()) {
@@ -918,9 +924,8 @@ const UpdateImagesPage = () => {
         uploadData.append('category_id', formData.category_id);
       }
 
-      console.log('Updating image...');
+      console.log('📤 Updating image...');
 
-      // PATCH to /api/images/v1/image/{image_id} with multipart/form-data
       const response = await AxiosInstance.patch(
         `/api/images/v1/image/${imageId}`,
         uploadData,
@@ -931,13 +936,11 @@ const UpdateImagesPage = () => {
         }
       );
 
-      console.log('Update response:', response.data);
+      console.log('✅ Update response:', response.data);
 
-      // Backend returns the updated image object
       if (response.status === 200 || response.data) {
         toast.success('Image updated successfully!');
         
-        // Redirect to images list after a short delay
         setTimeout(() => {
           router.push('/imagespage');
         }, 1500);
@@ -946,7 +949,7 @@ const UpdateImagesPage = () => {
       }
 
     } catch (error) {
-      console.error('Error updating image:', error);
+      console.error('❌ Error updating image:', error);
       
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
@@ -959,7 +962,6 @@ const UpdateImagesPage = () => {
         const errorDetail = error.response?.data?.detail || 'Invalid data provided';
         toast.error(errorDetail);
       } else if (error.response?.status === 422) {
-        // Validation error from FastAPI
         const validationErrors = error.response?.data?.detail;
         if (Array.isArray(validationErrors)) {
           validationErrors.forEach(err => {
@@ -980,7 +982,6 @@ const UpdateImagesPage = () => {
     router.push('/imagespage');
   };
 
-  // Check if AuthContext is still loading
   if (!authContext) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
@@ -995,7 +996,6 @@ const UpdateImagesPage = () => {
     );
   }
 
-  // Access denied screen
   if (!hasUpdatePermission) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
@@ -1027,7 +1027,6 @@ const UpdateImagesPage = () => {
     );
   }
 
-  // Loading state while fetching image
   if (isLoading) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
@@ -1047,6 +1046,13 @@ const UpdateImagesPage = () => {
       </div>
     );
   }
+
+  // Construct the full image URL with normalization
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const normalizedImagePath = currentImageUrl?.replace(/\\/g, '/') || '';
+  const fullCurrentImageUrl = `${apiUrl}/${normalizedImagePath}`;
+
+  console.log('🎨 Rendering with image URL:', fullCurrentImageUrl);
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 overflow-auto">
@@ -1094,7 +1100,7 @@ const UpdateImagesPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-            {/* Current Image Display */}
+            {/* Current Image Display - Always show current image unless user selected new one */}
             {currentImageUrl && !previewUrl && (
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-3">
@@ -1102,19 +1108,26 @@ const UpdateImagesPage = () => {
                 </label>
                 <div className="relative w-full h-64 bg-slate-900/50 rounded-xl overflow-hidden border-2 border-slate-700/50">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/${currentImageUrl.replace(/\\/g, '/')}`}
+                    src={fullCurrentImageUrl}
                     alt={originalData?.name || 'Current image'}
                     className="w-full h-full object-contain"
+                    onLoad={() => {
+                      console.log('✅ Current image loaded successfully');
+                    }}
                     onError={(e) => {
+                      console.error('❌ Current image failed to load:', fullCurrentImageUrl);
                       e.target.onerror = null;
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect width="400" height="400" fill="%23334155"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="%23CBD5E1"%3ENo Image%3C/text%3E%3C/svg%3E';
+                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect width="400" height="400" fill="%23334155"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%23CBD5E1"%3EImage%3C/text%3E%3Ctext x="58%25" y="58%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%23CBD5E1"%3ENot Found%3C/text%3E%3C/svg%3E';
                     }}
                   />
                 </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Path: {normalizedImagePath}
+                </p>
               </div>
             )}
 
-            {/* File Upload Field (Optional) */}
+            {/* File Upload Field for replacement */}
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-3">
                 Replace Image <span className="text-slate-500">(Optional)</span>
@@ -1160,6 +1173,10 @@ const UpdateImagesPage = () => {
                   >
                     <X className="w-5 h-5" />
                   </button>
+                  <p className="text-xs text-green-400 mt-2 flex items-center gap-2">
+                    <Upload className="w-3 h-3" />
+                    New image selected - will replace current image when saved
+                  </p>
                 </div>
               )}
               
