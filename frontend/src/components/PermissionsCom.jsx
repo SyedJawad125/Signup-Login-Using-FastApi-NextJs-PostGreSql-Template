@@ -59,7 +59,7 @@ const PermissionsCom = () => {
   }, []);
 
   const updatePermission = (id) => {
-    router.push(`/UpdatePermissionPage?id=${id}`);
+    router.push(`/adminupdatepermissions?id=${id}`);
   };
 
   const deletePermission = async (id) => {
