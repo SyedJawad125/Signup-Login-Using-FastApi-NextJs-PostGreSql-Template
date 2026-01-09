@@ -55,10 +55,21 @@ const PermissionsCom = () => {
   };
 
   useEffect(() => {
-    fetchPermissions(pagination.page);
+    // Check if returning from update page
+    const savedPage = sessionStorage.getItem('permissionsCurrentPage');
+    if (savedPage) {
+      const pageNumber = parseInt(savedPage, 10);
+      setPagination(prev => ({ ...prev, page: pageNumber }));
+      fetchPermissions(pageNumber);
+      sessionStorage.removeItem('permissionsCurrentPage');
+    } else {
+      fetchPermissions(pagination.page);
+    }
   }, []);
 
   const updatePermission = (id) => {
+    // Store current page before navigating
+    sessionStorage.setItem('permissionsCurrentPage', pagination.page);
     router.push(`/adminupdatepermissions?id=${id}`);
   };
 
@@ -178,9 +189,8 @@ const PermissionsCom = () => {
                 <div key={i} className="grid grid-cols-12 gap-4 p-6 border-b border-slate-700/20 last:border-b-0">
                   <div className="col-span-2 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
                   <div className="col-span-2 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
+                  <div className="col-span-4 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
                   <div className="col-span-3 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
-                  <div className="col-span-2 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
-                  <div className="col-span-2 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
                   <div className="col-span-1 h-8 bg-gradient-to-r from-slate-700/50 to-slate-600/50 rounded-lg animate-pulse"></div>
                 </div>
               ))}
