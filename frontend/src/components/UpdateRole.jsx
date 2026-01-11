@@ -1,38 +1,56 @@
 'use client';
 import React, { useState, useContext, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AxiosInstance from '@/components/AxiosInstance';
 import { AuthContext } from '@/components/AuthContext';
 import { ArrowLeft, Save, Shield, AlertCircle, Eye, Search, X } from 'lucide-react';
 
-const AddRolePage = () => {
+const UpdateRolePage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const roleId = searchParams.get('id');
+  
   const authContext = useContext(AuthContext);
   
   const permissions = authContext?.permissions || {};
-  const hasCreatePermission = permissions?.create_role || false;
+  const hasUpdatePermission = permissions?.update_role || false;
+  const hasReadPermission = permissions?.read_role || false;
 
   const [formData, setFormData] = useState({
     code: '',
     name: '',
     description: ''
   });
+  const [originalData, setOriginalData] = useState(null);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [originalPermissions, setOriginalPermissions] = useState([]);
   const [availablePermissions, setAvailablePermissions] = useState([]);
   const [filteredPermissions, setFilteredPermissions] = useState([]);
   const [permissionSearch, setPermissionSearch] = useState('');
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
 
   // Fetch all available permissions
   useEffect(() => {
-    if (hasCreatePermission) {
+    if (hasReadPermission) {
       fetchAllPermissions();
     }
-  }, [hasCreatePermission]);
+  }, [hasReadPermission]);
+
+  // Fetch role data
+  useEffect(() => {
+    if (roleId && hasReadPermission) {
+      fetchRole();
+    } else if (!roleId) {
+      toast.error('Role ID is required');
+      router.push('/Roles');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleId, hasReadPermission]);
 
   // Filter permissions based on search
   useEffect(() => {
@@ -72,6 +90,83 @@ const AddRolePage = () => {
       setIsLoadingPermissions(false);
     }
   };
+
+  const fetchRole = async () => {
+    setIsLoading(true);
+    
+    try {
+      // GET /api/roles/v1/role/{id}
+      const response = await AxiosInstance.get(`/api/roles/v1/role/${roleId}`);
+      
+      console.log('Fetch role response:', response.data);
+      
+      // Backend returns the role object directly
+      const roleData = response.data;
+      
+      if (roleData) {
+        setOriginalData(roleData);
+        setFormData({
+          code: roleData.code || '',
+          name: roleData.name || '',
+          description: roleData.description || ''
+        });
+
+        // Handle permissions - they might be objects or IDs
+        let rolePermissions = [];
+        if (roleData.permissions && Array.isArray(roleData.permissions)) {
+          if (roleData.permissions.length > 0 && typeof roleData.permissions[0] === 'object') {
+            // Permissions are already objects
+            rolePermissions = roleData.permissions;
+          } else {
+            // Permissions are IDs, we'll map them after availablePermissions loads
+            rolePermissions = roleData.permissions.map(permId => ({ id: permId }));
+          }
+        }
+        
+        setSelectedPermissions(rolePermissions);
+        setOriginalPermissions(rolePermissions);
+      } else {
+        toast.error('Failed to load role data');
+        router.push('/Roles');
+      }
+      
+    } catch (error) {
+      console.error('Error fetching role:', error);
+      
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        router.push('/login');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to view this role');
+        router.push('/Roles');
+      } else if (error.response?.status === 404) {
+        toast.error('Role not found');
+        router.push('/Roles');
+      } else {
+        toast.error(error.response?.data?.detail || 'Error loading role');
+        router.push('/Roles');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Map permission IDs to full objects once availablePermissions loads
+  useEffect(() => {
+    if (availablePermissions.length > 0 && selectedPermissions.length > 0) {
+      const mappedPermissions = selectedPermissions.map(selectedPerm => {
+        // If it's already a full object with name, keep it
+        if (selectedPerm.name) return selectedPerm;
+        
+        // Otherwise find it in availablePermissions
+        const found = availablePermissions.find(p => p.id === selectedPerm.id);
+        return found || selectedPerm;
+      });
+      
+      setSelectedPermissions(mappedPermissions);
+      setOriginalPermissions(mappedPermissions);
+    }
+  }, [availablePermissions]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -146,11 +241,35 @@ const AddRolePage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const hasChanges = () => {
+    if (!originalData) return false;
+    
+    // Check form fields
+    const formChanged = (
+      formData.code.trim() !== (originalData.code || '') ||
+      formData.name.trim() !== (originalData.name || '') ||
+      formData.description.trim() !== (originalData.description || '')
+    );
+
+    // Check permissions
+    const selectedIds = selectedPermissions.map(p => p.id).sort();
+    const originalIds = originalPermissions.map(p => p.id).sort();
+    const permissionsChanged = JSON.stringify(selectedIds) !== JSON.stringify(originalIds);
+
+    return formChanged || permissionsChanged;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!hasCreatePermission) {
-      toast.error('You do not have permission to create roles');
+    if (!hasUpdatePermission) {
+      toast.error('You do not have permission to update roles');
+      return;
+    }
+
+    // Check if data has changed
+    if (!hasChanges()) {
+      toast.info('No changes detected');
       return;
     }
 
@@ -170,33 +289,39 @@ const AddRolePage = () => {
         permission_ids: selectedPermissions.map(p => p.id)
       };
 
-      console.log('Submitting role:', payload);
+      console.log('Updating role:', payload);
 
-      // POST to /api/roles/v1/role/
-      const response = await AxiosInstance.post('/api/roles/v1/role/', payload);
+      // PATCH /api/roles/v1/role/{id}
+      const response = await AxiosInstance.patch(
+        `/api/roles/v1/role/${roleId}`,
+        payload
+      );
 
-      console.log('Create response:', response.data);
+      console.log('Update response:', response.data);
 
-      // Backend returns 201 status with role object
-      if (response.status === 201 || response.data) {
-        toast.success('Role created successfully!');
+      // Backend returns the updated role object
+      if (response.status === 200 || response.data) {
+        toast.success('Role updated successfully!');
         
         // Redirect to roles list after a short delay
         setTimeout(() => {
           router.push('/Roles');
         }, 1500);
       } else {
-        toast.error('Failed to create role');
+        toast.error('Failed to update role');
       }
 
     } catch (error) {
-      console.error('Error creating role:', error);
+      console.error('Error updating role:', error);
       
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
         router.push('/login');
       } else if (error.response?.status === 403) {
-        toast.error('You do not have permission to create roles');
+        toast.error('You do not have permission to update roles');
+      } else if (error.response?.status === 404) {
+        toast.error('Role not found');
+        router.push('/Roles');
       } else if (error.response?.status === 400) {
         const errorDetail = error.response?.data?.detail || 'Invalid data provided';
         toast.error(errorDetail);
@@ -211,7 +336,7 @@ const AddRolePage = () => {
           toast.error('Validation error. Please check your input.');
         }
       } else {
-        toast.error(error.response?.data?.detail || error.message || 'Error creating role');
+        toast.error(error.response?.data?.detail || error.message || 'Error updating role');
       }
     } finally {
       setIsSubmitting(false);
@@ -238,7 +363,7 @@ const AddRolePage = () => {
   }
 
   // Access denied screen
-  if (!hasCreatePermission) {
+  if (!hasUpdatePermission) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
         <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center max-w-md">
@@ -247,10 +372,10 @@ const AddRolePage = () => {
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Access Denied</h2>
           <p className="text-slate-400 mb-6">
-            You don't have permission to create roles. Please contact your administrator.
+            You don't have permission to update roles. Please contact your administrator.
           </p>
           <p className="text-xs text-slate-500 mb-6">
-            Required permission: create_role
+            Required permission: update_role
           </p>
           <button 
             onClick={() => router.push('/Roles')}
@@ -258,6 +383,27 @@ const AddRolePage = () => {
           >
             Back to Roles
           </button>
+        </div>
+        <ToastContainer 
+          position="top-right" 
+          autoClose={3000}
+          theme="dark"
+          className="mt-16"
+        />
+      </div>
+    );
+  }
+
+  // Loading state while fetching role
+  if (isLoading) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center justify-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-slate-700 border-t-amber-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-yellow-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1s' }}></div>
+          </div>
+          <p className="mt-6 text-slate-400 font-medium">Loading role data...</p>
         </div>
         <ToastContainer 
           position="top-right" 
@@ -290,14 +436,16 @@ const AddRolePage = () => {
           </button>
 
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-600/20 to-yellow-500/10 rounded-2xl flex items-center justify-center border-2 border-amber-500/30">
-              <Shield className="w-8 h-8 text-amber-400" />
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-600/20 to-amber-500/10 rounded-2xl flex items-center justify-center border-2 border-orange-500/30">
+              <Shield className="w-8 h-8 text-orange-400" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
-                Add New Role
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-300 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                Update Role
               </h1>
-              <p className="text-slate-400 text-sm mt-1">Create a new role with permissions</p>
+              <p className="text-slate-400 text-sm mt-1">
+                Edit role: <span className="text-white font-medium">{originalData?.name}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -308,10 +456,10 @@ const AddRolePage = () => {
             <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-2 border-slate-700/30 rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-8">
               {/* Luxury border frame */}
               <div className="absolute inset-0 rounded-3xl pointer-events-none">
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-amber-400/40 rounded-tl-3xl"></div>
-                <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-amber-400/40 rounded-tr-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-amber-400/40 rounded-bl-3xl"></div>
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-amber-400/40 rounded-br-3xl"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-orange-400/40 rounded-tl-3xl"></div>
+                <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-orange-400/40 rounded-tr-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-orange-400/40 rounded-bl-3xl"></div>
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-orange-400/40 rounded-br-3xl"></div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
@@ -334,10 +482,9 @@ const AddRolePage = () => {
                       className={`w-full px-4 py-4 bg-slate-900/50 text-white border ${
                         errors.code 
                           ? 'border-red-500/50 focus:ring-red-500/50' 
-                          : 'border-slate-700/50 focus:ring-amber-500/50 focus:border-amber-500/50'
+                          : 'border-slate-700/50 focus:ring-orange-500/50 focus:border-orange-500/50'
                       } rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-slate-500`}
                       disabled={isSubmitting}
-                      autoFocus
                     />
                     {errors.code && (
                       <div className="flex items-center gap-2 mt-2 text-red-400 text-sm">
@@ -370,7 +517,7 @@ const AddRolePage = () => {
                       className={`w-full px-4 py-4 bg-slate-900/50 text-white border ${
                         errors.name 
                           ? 'border-red-500/50 focus:ring-red-500/50' 
-                          : 'border-slate-700/50 focus:ring-amber-500/50 focus:border-amber-500/50'
+                          : 'border-slate-700/50 focus:ring-orange-500/50 focus:border-orange-500/50'
                       } rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-slate-500`}
                       disabled={isSubmitting}
                     />
@@ -405,7 +552,7 @@ const AddRolePage = () => {
                       className={`w-full px-4 py-4 bg-slate-900/50 text-white border ${
                         errors.description 
                           ? 'border-red-500/50 focus:ring-red-500/50' 
-                          : 'border-slate-700/50 focus:ring-amber-500/50 focus:border-amber-500/50'
+                          : 'border-slate-700/50 focus:ring-orange-500/50 focus:border-orange-500/50'
                       } rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-slate-500 resize-none`}
                       disabled={isSubmitting}
                     />
@@ -421,17 +568,39 @@ const AddRolePage = () => {
                   </p>
                 </div>
 
-                {/* Info Box */}
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                {/* Role Info */}
+                {originalData && (
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-2">
+                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Role Information</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-slate-500">Role ID</p>
+                        <p className="text-white font-medium">#{originalData.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Created At</p>
+                        <p className="text-white font-medium">
+                          {new Date(originalData.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Warning Box */}
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
                   <div className="flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-blue-300 text-sm font-medium mb-1">Role Guidelines</p>
+                      <p className="text-amber-300 text-sm font-medium mb-1">Important Notes</p>
                       <ul className="text-slate-400 text-xs space-y-1">
-                        <li>• Use descriptive names that clearly indicate the role's purpose</li>
-                        <li>• Code should be lowercase with underscores (snake_case)</li>
-                        <li>• Select permissions carefully based on role responsibilities</li>
-                        <li>• Roles can be assigned to multiple users</li>
+                        <li>• Updating this role will affect all users assigned to it</li>
+                        <li>• Permission changes will be applied immediately</li>
+                        <li>• Changes will be visible immediately after saving</li>
                       </ul>
                     </div>
                   </div>
@@ -450,18 +619,18 @@ const AddRolePage = () => {
                   
                   <button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-500 hover:via-amber-400 hover:to-yellow-500 text-slate-900 font-bold rounded-xl shadow-[0_4px_20px_rgba(251,191,36,0.4)] hover:shadow-[0_6px_30px_rgba(251,191,36,0.6)] transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-amber-400/30"
+                    disabled={isSubmitting || !hasChanges()}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-600 hover:from-orange-500 hover:via-amber-400 hover:to-yellow-500 text-slate-900 font-bold rounded-xl shadow-[0_4px_20px_rgba(251,146,60,0.4)] hover:shadow-[0_6px_30px_rgba(251,146,60,0.6)] transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-orange-400/30"
                   >
                     {isSubmitting ? (
                       <>
                         <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                        <span>Creating...</span>
+                        <span>Updating...</span>
                       </>
                     ) : (
                       <>
                         <Save className="w-5 h-5" />
-                        <span>Create Role</span>
+                        <span>Update Role</span>
                       </>
                     )}
                   </button>
@@ -585,14 +754,14 @@ const AddRolePage = () => {
         {/* Quick Tips Card */}
         <div className="mt-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-amber-400" />
-            Quick Tips
+            <Shield className="w-5 h-5 text-orange-400" />
+            Update Tips
           </h3>
           <div className="space-y-2 text-slate-400 text-sm">
-            <p>✓ Roles define what users can do in the system</p>
-            <p>✓ You can edit or delete roles later if needed</p>
-            <p>✓ Users can be assigned to multiple roles</p>
-            <p>✓ Roles with assigned users cannot be deleted without unassigning them first</p>
+            <p>✓ The role will be updated for all assigned users</p>
+            <p>✓ Permission changes take effect immediately</p>
+            <p>✓ You can revert changes by canceling before saving</p>
+            <p>✓ Original creation information is preserved</p>
           </div>
         </div>
       </div>
@@ -617,4 +786,4 @@ const AddRolePage = () => {
   );
 };
 
-export default AddRolePage;
+export default UpdateRolePage;

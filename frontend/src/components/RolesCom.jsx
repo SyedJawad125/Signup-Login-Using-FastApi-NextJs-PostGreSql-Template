@@ -155,7 +155,7 @@ const RolesCom = () => {
   };
 
   const updateRole = (id) => {
-    router.push(`/adminupdaterole?id=${id}`);
+    router.push(`/UpdateRole?id=${id}`);
   };
 
   const deleteRole = async (id, permanent = false) => {
